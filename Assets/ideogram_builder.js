@@ -148,9 +148,10 @@ class IdeogramCanvas {
         this.dragState = null;    // { mode:'draw'|'move'|'resize', startX,startY, ... }
         this._handleBoxColors = [];
 
-        canvas.addEventListener('mousedown', e => this._onMouseDown(e));
-        canvas.addEventListener('mousemove', e => this._onMouseMove(e));
-        canvas.addEventListener('mouseup',   e => this._onMouseUp(e));
+        canvas.addEventListener('pointerdown', e => this._onMouseDown(e));
+        canvas.addEventListener('pointermove', e => this._onMouseMove(e));
+        canvas.addEventListener('pointerup',   e => this._onMouseUp(e));
+        canvas.addEventListener('pointercancel', e => this._onPointerCancel(e));
         canvas.addEventListener('contextmenu', e => this._onContextMenu(e));
         canvas.addEventListener('dblclick',  e => this._onDblClick(e));
     }
@@ -207,6 +208,10 @@ class IdeogramCanvas {
 
     _onMouseDown(e) {
         e.preventDefault();
+        // Capture pointer so move/up events keep firing even outside the canvas
+        if (e.pointerId != null) {
+            this.canvas.setPointerCapture(e.pointerId);
+        }
         let {x, y} = this._frac(e);
         let handle = this._resizeHandle(x, y);
         if (handle) {
@@ -283,7 +288,15 @@ class IdeogramCanvas {
         }
     }
 
+    _onPointerCancel(e) {
+        // Treat a cancelled pointer (e.g. touch interrupted) the same as mouse-up
+        this._onMouseUp(e);
+    }
+
     _onMouseUp(e) {
+        if (e.pointerId != null && this.canvas.hasPointerCapture(e.pointerId)) {
+            this.canvas.releasePointerCapture(e.pointerId);
+        }
         if (!this.dragState) {
             return;
         }
@@ -543,10 +556,7 @@ class IdeogramBuilder {
         );
         // Resize canvas once the tab is visible
         let resizeObs = new ResizeObserver(() => {
-            let wrapper = document.getElementById('ideogram_canvas_wrapper');
-            if (wrapper) {
-                this.canvas.resize(wrapper);
-            }
+            this._resizeCanvasToAspect();
         });
         resizeObs.observe(this.canvasWrapper);
         // Also resize on tab click
@@ -672,7 +682,7 @@ class IdeogramBuilder {
             }
             dragging = false;
             document.body.style.cursor = '';
-            this.canvas.resize(this.canvasWrapper);
+            this._resizeCanvasToAspect();
         });
     }
 
@@ -1122,12 +1132,16 @@ class IdeogramBuilder {
             images: 1
         };
 
-        // Set the model via the existing current_model element so SwarmUI picks it up
-        let curModelEl = document.getElementById('current_model');
-        if (curModelEl) {
-            curModelEl.value = modelName;
-            // Trigger change event so SwarmUI updates internal state
-            curModelEl.dispatchEvent(new Event('change'));
+        // Set the model via SwarmUI's dropdown setter so internal state is fully updated
+        if (typeof forceSetDropdownValue !== 'undefined') {
+            forceSetDropdownValue('current_model', modelName);
+        }
+        else {
+            let curModelEl = document.getElementById('current_model');
+            if (curModelEl) {
+                curModelEl.value = modelName;
+                curModelEl.dispatchEvent(new Event('change'));
+            }
         }
 
         this._setStatus('Queuing generation…');
