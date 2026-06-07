@@ -1,0 +1,450 @@
+/* ============================================================
+   Ideogram Prompt Builder – Extension Styles
+   ideogram_builder.css
+   ============================================================ */
+
+/* ── Root container ─────────────────────────────────────────── */
+#ideogram_builder_container.ideogram-builder {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--background);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.4;
+    overflow: hidden;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────── */
+.ideogram-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    background: var(--background-gray);
+    border-bottom: 1px solid var(--light-border);
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.ideogram-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--emphasis);
+    white-space: nowrap;
+}
+
+.ideogram-topbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ideogram-generate-btn {
+    margin-left: auto;
+    padding: 6px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--emphasis) !important;
+    color: #fff !important;
+    border: none;
+    cursor: pointer;
+}
+
+    .ideogram-generate-btn:hover {
+        filter: brightness(1.15);
+    }
+
+.ideogram-status {
+    font-size: 12px;
+    color: var(--text-soft, #aaa);
+    min-width: 120px;
+}
+
+.ideogram-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--emphasis);
+}
+
+/* ── Main body (sidebar + canvas) ───────────────────────────── */
+.ideogram-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.ideogram-sidebar {
+    width: 340px;
+    min-width: 240px;
+    max-width: 600px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--background);
+    border-right: 1px solid var(--light-border);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Scrollbar */
+.ideogram-sidebar::-webkit-scrollbar       { width: 6px; }
+.ideogram-sidebar::-webkit-scrollbar-track { background: transparent; }
+.ideogram-sidebar::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 3px; }
+
+/* ── Resize handle ───────────────────────────────────────────── */
+.ideogram-resize-handle {
+    width: 5px;
+    cursor: col-resize;
+    background: var(--light-border);
+    flex-shrink: 0;
+    z-index: 10;
+    transition: background 0.15s;
+}
+
+    .ideogram-resize-handle:hover {
+        background: var(--emphasis);
+    }
+
+/* ── Section blocks ──────────────────────────────────────────── */
+.ideogram-section {
+    border-bottom: 1px solid var(--light-border);
+    padding: 8px 10px;
+}
+
+.ideogram-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-soft, #aaa);
+    margin-bottom: 6px;
+}
+
+.ideogram-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--background-gray);
+    color: var(--text-soft, #aaa);
+    font-size: 10px;
+    cursor: help;
+    border: 1px solid var(--light-border);
+    flex-shrink: 0;
+}
+
+.ideogram-icon-btn {
+    margin-left: auto;
+    padding: 1px 8px;
+    font-size: 11px;
+    background: var(--background-gray);
+    color: var(--text);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+    .ideogram-icon-btn:hover {
+        background: var(--emphasis);
+        color: #fff;
+        border-color: var(--emphasis);
+    }
+
+    .ideogram-icon-btn.danger:hover {
+        background: var(--error, #c00);
+        border-color: var(--error, #c00);
+    }
+
+/* ── Fields ──────────────────────────────────────────────────── */
+.ideogram-field-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.ideogram-label {
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-soft, #aaa);
+    min-width: 90px;
+    padding-top: 4px;
+    flex-shrink: 0;
+}
+
+.ideogram-input {
+    flex: 1;
+    background: var(--background-gray);
+    color: var(--text);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 13px;
+    min-width: 0;
+}
+
+    .ideogram-input:focus {
+        outline: none;
+        border-color: var(--emphasis);
+    }
+
+.ideogram-textarea {
+    flex: 1;
+    background: var(--background-gray);
+    color: var(--text);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    padding: 4px 6px;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 54px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+    .ideogram-textarea:focus {
+        outline: none;
+        border-color: var(--emphasis);
+    }
+
+.ideogram-select {
+    flex: 1;
+    background: var(--background-gray);
+    color: var(--text);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    padding: 3px 4px;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.ideogram-model-select {
+    max-width: 220px;
+}
+
+.ideogram-num {
+    width: 72px;
+    background: var(--background-gray);
+    color: var(--text);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    padding: 3px 5px;
+    font-size: 13px;
+    text-align: right;
+}
+
+/* ── Palette strip ───────────────────────────────────────────── */
+.ideogram-palette-row {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ideogram-palette-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+}
+
+.ideogram-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    border: 1px solid var(--light-border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+}
+
+    .ideogram-swatch:hover {
+        transform: scale(1.15);
+        border-color: var(--emphasis);
+    }
+
+/* ── Element list ────────────────────────────────────────────── */
+.ideogram-elements-section {
+    flex-shrink: 0;
+}
+
+.ideogram-element-list {
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.ideogram-elem-list-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+    .ideogram-elem-list-item:hover {
+        background: var(--background-gray);
+    }
+
+    .ideogram-elem-list-item.ideogram-elem-selected {
+        background: color-mix(in srgb, var(--emphasis) 20%, transparent);
+        border-left: 2px solid var(--emphasis);
+    }
+
+.ideogram-elem-tag {
+    font-weight: 700;
+    font-family: monospace;
+    white-space: nowrap;
+    color: var(--emphasis);
+}
+
+.ideogram-elem-summary {
+    color: var(--text-soft, #ccc);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ideogram-empty-hint {
+    color: var(--text-soft, #888);
+    font-size: 12px;
+    padding: 6px 0;
+    text-align: center;
+}
+
+/* ── Element editor ──────────────────────────────────────────── */
+.ideogram-element-editor {
+    background: color-mix(in srgb, var(--emphasis) 5%, var(--background));
+    border-left: 2px solid var(--emphasis);
+}
+
+.ideogram-bbox-display {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-soft, #aaa);
+    padding-top: 4px;
+}
+
+/* ── Extra fields ────────────────────────────────────────────── */
+.ideogram-extra-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ideogram-extra-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.ideogram-extra-key {
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.ideogram-extra-val {
+    flex: 1;
+}
+
+/* ── JSON preview ────────────────────────────────────────────── */
+.ideogram-json-preview {
+    background: var(--background-gray);
+    border: 1px solid var(--light-border);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-family: monospace;
+    max-height: 220px;
+    overflow: auto;
+    white-space: pre;
+    color: var(--text);
+    margin: 0;
+}
+
+/* ── Canvas area ─────────────────────────────────────────────── */
+.ideogram-canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #111;
+    position: relative;
+}
+
+.ideogram-canvas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: var(--background-gray);
+    border-bottom: 1px solid var(--light-border);
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-soft, #aaa);
+}
+
+.ideogram-hint-text {
+    font-size: 12px;
+    color: var(--text-soft, #888);
+}
+
+.ideogram-canvas-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    padding: 12px;
+}
+
+.ideogram-canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    cursor: crosshair;
+    image-rendering: pixelated;
+    border: 1px solid var(--light-border);
+    background: #1a1a1a;
+}
+
+/* ── Responsive / narrow window ──────────────────────────────── */
+@media (max-width: 700px) {
+    .ideogram-body {
+        flex-direction: column;
+    }
+
+    .ideogram-sidebar {
+        width: 100% !important;
+        max-width: 100%;
+        height: 50%;
+        border-right: none;
+        border-bottom: 1px solid var(--light-border);
+    }
+
+    .ideogram-resize-handle {
+        display: none;
+    }
+
+    .ideogram-canvas-area {
+        height: 50%;
+    }
+}

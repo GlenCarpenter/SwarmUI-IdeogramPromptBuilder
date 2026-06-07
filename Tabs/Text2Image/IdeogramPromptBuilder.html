@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ideogram Prompt Builder</title>
+</head>
+<body>
+<div id="ideogram_builder_container" class="ideogram-builder">
+
+    <!-- ===== TOP BAR ===== -->
+    <div class="ideogram-topbar" id="ideogram_topbar">
+        <span class="ideogram-title">Ideogram 4 Prompt Builder</span>
+
+        <!-- Aspect Ratio / Dimensions -->
+        <div class="ideogram-topbar-group">
+            <label class="ideogram-label">Aspect Ratio:</label>
+            <select id="ideogram_aspect_preset" class="ideogram-select">
+                <option value="1024x1024">1:1  (1024×1024)</option>
+                <option value="1152x896">9:7  (1152×896)</option>
+                <option value="896x1152">7:9  (896×1152)</option>
+                <option value="1216x832">3:2  (1216×832)</option>
+                <option value="832x1216">2:3  (832×1216)</option>
+                <option value="1344x768">16:9 (1344×768)</option>
+                <option value="768x1344">9:16 (768×1344)</option>
+                <option value="1536x640">12:5 (1536×640)</option>
+                <option value="640x1536">5:12 (640×1536)</option>
+                <option value="custom">Custom…</option>
+            </select>
+            <span id="ideogram_custom_dims" style="display:none">
+                <input type="number" id="ideogram_width"  class="ideogram-num" value="1024" min="64" max="4096" step="16"> ×
+                <input type="number" id="ideogram_height" class="ideogram-num" value="1024" min="64" max="4096" step="16">
+            </span>
+        </div>
+
+        <!-- Model selector -->
+        <div class="ideogram-topbar-group">
+            <label class="ideogram-label">Model:</label>
+            <select id="ideogram_model_select" class="ideogram-select ideogram-model-select">
+                <option value="">— select model —</option>
+            </select>
+        </div>
+
+        <!-- Redirect option -->
+        <div class="ideogram-topbar-group">
+            <label class="ideogram-label" for="ideogram_redirect_toggle">Redirect to Generate tab after queue:</label>
+            <input type="checkbox" id="ideogram_redirect_toggle" class="ideogram-checkbox">
+        </div>
+
+        <!-- Generate button -->
+        <button id="ideogram_generate_btn" class="ideogram-generate-btn basic-button">
+            &#9654; Generate
+        </button>
+
+        <!-- Status -->
+        <span id="ideogram_status" class="ideogram-status"></span>
+    </div>
+
+    <!-- ===== MAIN BODY (sidebar + canvas) ===== -->
+    <div class="ideogram-body">
+
+        <!-- ===== LEFT SIDEBAR ===== -->
+        <div id="ideogram_sidebar" class="ideogram-sidebar">
+
+            <!-- High-Level Description -->
+            <div class="ideogram-section">
+                <div class="ideogram-section-header">
+                    High Level Description
+                    <span class="ideogram-hint" title="Optional overview of the entire image. Strongly recommended.">?</span>
+                </div>
+                <textarea id="ideogram_hld" class="ideogram-textarea" rows="3"
+                    placeholder="A medium-shot photograph of a golden retriever riding a skateboard…"></textarea>
+            </div>
+
+            <!-- Style Description -->
+            <div class="ideogram-section">
+                <div class="ideogram-section-header">
+                    Style Description
+                    <span class="ideogram-hint" title="Controls visual style, lighting, medium, and color palette.">?</span>
+                </div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Style type:</label>
+                    <select id="ideogram_style_type" class="ideogram-select">
+                        <option value="none">None</option>
+                        <option value="photo" selected>Photo</option>
+                        <option value="art_style">Art Style</option>
+                    </select>
+                </div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Aesthetics:</label>
+                    <input type="text" id="ideogram_aesthetics" class="ideogram-input"
+                        placeholder="warm, playful, vibrant">
+                </div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Lighting:</label>
+                    <input type="text" id="ideogram_lighting" class="ideogram-input"
+                        placeholder="bright afternoon sunlight, soft shadows">
+                </div>
+
+                <div id="ideogram_photo_row" class="ideogram-field-row">
+                    <label class="ideogram-label">Photo (lens/camera):</label>
+                    <input type="text" id="ideogram_photo" class="ideogram-input"
+                        placeholder="85mm, f/1.8, shallow depth of field">
+                </div>
+
+                <div id="ideogram_artstyle_row" class="ideogram-field-row" style="display:none">
+                    <label class="ideogram-label">Art Style:</label>
+                    <input type="text" id="ideogram_art_style" class="ideogram-input"
+                        placeholder="flat vector illustration, bold outlines">
+                </div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Medium:</label>
+                    <input type="text" id="ideogram_medium" class="ideogram-input"
+                        placeholder="photograph / illustration / 3d_render / painting…">
+                </div>
+
+                <!-- Style color palette -->
+                <div class="ideogram-field-row ideogram-palette-row">
+                    <label class="ideogram-label">Color Palette (up to 16):</label>
+                    <div id="ideogram_style_palette" class="ideogram-palette-strip"></div>
+                    <button class="ideogram-palette-add basic-button" data-target="ideogram_style_palette">+</button>
+                </div>
+            </div>
+
+            <!-- Background -->
+            <div class="ideogram-section">
+                <div class="ideogram-section-header">
+                    Background
+                    <span class="ideogram-hint" title="Required. Description of the scene background/environment.">?</span>
+                </div>
+                <textarea id="ideogram_background" class="ideogram-textarea" rows="3"
+                    placeholder="A sun-drenched suburban sidewalk lined with green hedges…"></textarea>
+            </div>
+
+            <!-- Elements list -->
+            <div class="ideogram-section ideogram-elements-section">
+                <div class="ideogram-section-header">
+                    Elements
+                    <span class="ideogram-hint" title="Objects and text elements placed on the canvas via bounding boxes. Select an element here to edit its details.">?</span>
+                    <button id="ideogram_add_element_btn" class="ideogram-icon-btn" title="Add element without drawing a box">+ Add</button>
+                </div>
+                <div id="ideogram_element_list" class="ideogram-element-list"></div>
+            </div>
+
+            <!-- Selected-element editor -->
+            <div id="ideogram_element_editor" class="ideogram-section ideogram-element-editor" style="display:none">
+                <div class="ideogram-section-header">Edit Element</div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Type:</label>
+                    <select id="ideogram_elem_type" class="ideogram-select">
+                        <option value="obj">obj</option>
+                        <option value="text">text</option>
+                    </select>
+                </div>
+
+                <div id="ideogram_elem_text_row" class="ideogram-field-row" style="display:none">
+                    <label class="ideogram-label">Text literal:</label>
+                    <input type="text" id="ideogram_elem_text" class="ideogram-input" placeholder="Text to render in-image">
+                </div>
+
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">Description:</label>
+                    <textarea id="ideogram_elem_desc" class="ideogram-textarea" rows="3"
+                        placeholder="Detailed description of this element…"></textarea>
+                </div>
+
+                <div class="ideogram-field-row ideogram-palette-row">
+                    <label class="ideogram-label">Element Palette (up to 5):</label>
+                    <div id="ideogram_elem_palette" class="ideogram-palette-strip"></div>
+                    <button class="ideogram-palette-add basic-button" data-target="ideogram_elem_palette">+</button>
+                </div>
+
+                <!-- BBox pixel display (read-only feedback) -->
+                <div class="ideogram-field-row">
+                    <label class="ideogram-label">BBox (0–1000):</label>
+                    <span id="ideogram_elem_bbox_display" class="ideogram-bbox-display">—</span>
+                </div>
+
+                <div class="ideogram-field-row">
+                    <button id="ideogram_elem_delete_btn" class="basic-button danger">Delete Element</button>
+                    <button id="ideogram_elem_clear_bbox_btn" class="basic-button" style="margin-left:4px">Clear BBox</button>
+                </div>
+            </div>
+
+            <!-- Extra / custom fields -->
+            <div class="ideogram-section">
+                <div class="ideogram-section-header">
+                    Extra Fields
+                    <span class="ideogram-hint" title="Add any additional top-level JSON key/value pairs to the caption.">?</span>
+                    <button id="ideogram_add_extra_btn" class="ideogram-icon-btn">+ Add</button>
+                </div>
+                <div id="ideogram_extra_fields" class="ideogram-extra-fields"></div>
+            </div>
+
+            <!-- JSON Preview -->
+            <div class="ideogram-section">
+                <div class="ideogram-section-header">
+                    JSON Preview
+                    <button id="ideogram_copy_json_btn" class="ideogram-icon-btn" title="Copy JSON to clipboard">Copy</button>
+                    <button id="ideogram_import_json_btn" class="ideogram-icon-btn" title="Import JSON from clipboard">Import</button>
+                </div>
+                <pre id="ideogram_json_preview" class="ideogram-json-preview"></pre>
+            </div>
+
+        </div>
+
+        <!-- Sidebar resize handle -->
+        <div id="ideogram_resize_handle" class="ideogram-resize-handle"></div>
+
+        <!-- ===== CANVAS AREA ===== -->
+        <div id="ideogram_canvas_area" class="ideogram-canvas-area">
+            <div class="ideogram-canvas-toolbar">
+                <span class="ideogram-hint-text">Drag to draw a bounding box. Click a box to select/edit. Right-click to delete.</span>
+                <button id="ideogram_clear_boxes_btn" class="basic-button" style="margin-left:auto">Clear All Boxes</button>
+            </div>
+            <div id="ideogram_canvas_wrapper" class="ideogram-canvas-wrapper">
+                <canvas id="ideogram_canvas" class="ideogram-canvas"></canvas>
+            </div>
+        </div>
+
+    </div><!-- end ideogram-body -->
+
+</div><!-- end ideogram_builder_container -->
+</body>
+</html>
