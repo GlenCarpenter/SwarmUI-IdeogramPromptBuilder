@@ -885,27 +885,44 @@ class IdeogramBuilder {
     // ── Image result hook ─────────────────────────────────────────────────────
 
     _hookImageResult() {
-        // Wrap the global gotImageResult so we can load the result onto the canvas
-        // when a generation was triggered by this builder.
-        if (typeof window.gotImageResult !== 'function') {
-            // Not ready yet – retry after a short delay
+        // Wait until mainGenHandler exists
+        if (typeof mainGenHandler === 'undefined') {
             setTimeout(() => this._hookImageResult(), 500);
             return;
         }
-        if (window._ideogramOrigGotImageResult) {
-            return; // already hooked
+        if (this._imageHooked) {
+            return;
         }
-        window._ideogramOrigGotImageResult = window.gotImageResult;
-        window.gotImageResult = (image, metadata, batchId) => {
-            let result = window._ideogramOrigGotImageResult(image, metadata, batchId);
-            if (ideogramBuilder._awaitingResult) {
-                ideogramBuilder._awaitingResult = false;
-                ideogramBuilder.canvas.setBackground(image);
-                ideogramBuilder.clearPreviewBtn.style.display = '';
-                ideogramBuilder._setStatus('Preview loaded.', 3000);
-            }
+        this._imageHooked = true;
+
+        // Path A: non-preview generation — global gotImageResult is called
+        if (typeof window.gotImageResult === 'function' && !window._ideogramOrigGotImageResult) {
+            window._ideogramOrigGotImageResult = window.gotImageResult;
+            window.gotImageResult = (image, metadata, batchId) => {
+                let result = window._ideogramOrigGotImageResult(image, metadata, batchId);
+                ideogramBuilder._onImageArrived(image);
+                return result;
+            };
+        }
+
+        // Path B: preview → final — mainGenHandler.gotTrackedImageResult is called instead.
+        // This is the common path when load-previews is enabled (the default).
+        let origTracked = mainGenHandler.gotTrackedImageResult.bind(mainGenHandler);
+        mainGenHandler.gotTrackedImageResult = function(image, metadata, batchId, existingDiv) {
+            let result = origTracked(image, metadata, batchId, existingDiv);
+            ideogramBuilder._onImageArrived(image);
             return result;
         };
+    }
+
+    _onImageArrived(imageSrc) {
+        if (!this._awaitingResult) {
+            return;
+        }
+        this._awaitingResult = false;
+        this.canvas.setBackground(imageSrc);
+        this.clearPreviewBtn.style.display = '';
+        this._setStatus('Preview loaded.', 3000);
     }
 
     // ── Model loading ─────────────────────────────────────────────────────────
