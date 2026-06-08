@@ -60,6 +60,24 @@ The editor builds captions conforming to the Ideogram 4 structured prompt format
 
 `bbox` values are integers on a **0–1000** grid (`[y_min, x_min, y_max, x_max]`). Elements without a drawn bounding box are included without a `bbox` field.
 
+## Model Downloads
+
+You need an Ideogram 4 diffusion model in your SwarmUI `Models/diffusion_models/` folder.
+
+| Model | Size | Link |
+|---|---|---|
+| Ideogram 4 FP8 (recommended) | ~9 GB | [Comfy-Org/Ideogram-4 — ideogram4_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_fp8_scaled.safetensors) |
+| Ideogram 4 NVFP4 (smaller, Blackwell GPUs) | ~5 GB | [Comfy-Org/Ideogram-4 — ideogram4_nvfp4_mixed.safetensors](https://huggingface.co/Comfy-Org/Ideogram-4/resolve/main/diffusion_models/ideogram4_nvfp4_mixed.safetensors) |
+| Ideogram 4 Unconditional FP8 (optional) | ~9 GB | [Comfy-Org/Ideogram-4 — diffusion_models tree](https://huggingface.co/Comfy-Org/Ideogram-4/tree/main/diffusion_models) |
+
+> **Tip:** The unconditional model is used for the negative half of CFG. It is optional and not currently required by SwarmUI.
+
+**Recommended generation parameters (from the [official docs](https://github.com/ideogram-oss/ideogram4/blob/main/docs/prompting.md)):**
+- **Steps:** `12` for fast / `48` for quality
+- **CFG:** ~`7`; optionally add a 1–3 step refiner pass at CFG `3`
+- **Sampler / Scheduler:** defaults are fine
+- **Resolution:** `1024` side length
+
 ## Installation
 
 Clone this repository into SwarmUI's `src/Extensions/` folder and restart SwarmUI:
