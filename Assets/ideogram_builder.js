@@ -832,7 +832,7 @@ class IdeogramBuilder {
                 this._setStatus('JSON copied!', 1500);
             });
         });
-        this.importJsonBtn.addEventListener('click', () => this._importFromClipboard());
+        this.importJsonBtn.addEventListener('click', () => this._openImportModal());
 
         // Clear boxes
         this.clearBoxesBtn.addEventListener('click', () => {
@@ -1262,18 +1262,113 @@ class IdeogramBuilder {
 
     // ── Import ────────────────────────────────────────────────────────────────
 
-    _importFromClipboard() {
-        navigator.clipboard.readText().then(text => {
+    _openImportModal() {
+        // Remove any existing modal
+        let existing = document.getElementById('ideogram-import-overlay');
+        if (existing) {
+            existing.remove();
+        }
+
+        let overlay = document.createElement('div');
+        overlay.id = 'ideogram-import-overlay';
+        overlay.className = 'ideogram-picker-overlay';
+
+        let popup = document.createElement('div');
+        popup.className = 'ideogram-import-popup';
+
+        let title = document.createElement('div');
+        title.className = 'ideogram-import-title';
+        title.textContent = 'Import JSON Caption';
+        popup.appendChild(title);
+
+        let textarea = document.createElement('textarea');
+        textarea.className = 'ideogram-import-textarea';
+        textarea.placeholder = 'Paste your Ideogram JSON caption here…';
+        textarea.spellcheck = false;
+        popup.appendChild(textarea);
+
+        let errorMsg = document.createElement('div');
+        errorMsg.className = 'ideogram-import-error';
+        popup.appendChild(errorMsg);
+
+        let btnRow = document.createElement('div');
+        btnRow.className = 'ideogram-picker-btn-row';
+        let okBtn = document.createElement('button');
+        okBtn.textContent = 'OK';
+        okBtn.className = 'basic-button ideogram-picker-ok';
+        okBtn.disabled = true;
+        let cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'basic-button ideogram-picker-cancel';
+        btnRow.appendChild(okBtn);
+        btnRow.appendChild(cancelBtn);
+        popup.appendChild(btnRow);
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+        textarea.focus();
+
+        let parsedCaption = null;
+
+        let validate = () => {
+            let raw = textarea.value.trim();
+            if (!raw) {
+                parsedCaption = null;
+                errorMsg.textContent = '';
+                okBtn.disabled = true;
+                return;
+            }
             try {
-                let caption = JSON.parse(text);
-                this._loadCaption(caption);
-                this._setStatus('Imported from clipboard.', 2000);
+                parsedCaption = JSON.parse(raw);
+                // Pretty-print only when the cursor isn't mid-typing
+                // (avoid rewriting while user is still editing)
+                errorMsg.textContent = '';
+                errorMsg.classList.remove('ideogram-import-error-visible');
+                okBtn.disabled = false;
             }
             catch (e) {
-                this._setStatus('Clipboard does not contain valid JSON.', 2500);
+                parsedCaption = null;
+                errorMsg.textContent = '⚠ Invalid JSON — ' + e.message;
+                errorMsg.classList.add('ideogram-import-error-visible');
+                okBtn.disabled = true;
             }
-        }).catch(() => {
-            this._setStatus('Could not read clipboard.', 2000);
+        };
+
+        // Pretty-print on paste (after a tick so the pasted content is in the textarea)
+        textarea.addEventListener('paste', () => {
+            setTimeout(() => {
+                let raw = textarea.value.trim();
+                try {
+                    let obj = JSON.parse(raw);
+                    textarea.value = JSON.stringify(obj, null, 4);
+                }
+                catch (_) { /* leave as-is, validate() will flag it */ }
+                validate();
+            }, 0);
+        });
+
+        textarea.addEventListener('input', () => validate());
+
+        let doConfirm = () => {
+            if (!parsedCaption || okBtn.disabled) {
+                return;
+            }
+            overlay.remove();
+            this._loadCaption(parsedCaption);
+            this._setStatus('Caption imported.', 2000);
+        };
+
+        okBtn.addEventListener('click', doConfirm);
+        cancelBtn.addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', e => {
+            if (e.target == overlay) {
+                overlay.remove();
+            }
+        });
+        overlay.addEventListener('keydown', e => {
+            if (e.key == 'Escape') {
+                overlay.remove();
+            }
         });
     }
 
