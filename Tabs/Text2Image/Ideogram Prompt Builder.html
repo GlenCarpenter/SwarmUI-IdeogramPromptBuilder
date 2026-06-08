@@ -39,12 +39,6 @@
             </select>
         </div>
 
-        <!-- Redirect option -->
-        <div class="ideogram-topbar-group">
-            <label class="ideogram-label" for="ideogram_redirect_toggle">Redirect to Generate tab after queue:</label>
-            <input type="checkbox" id="ideogram_redirect_toggle" class="ideogram-checkbox">
-        </div>
-
         <!-- Generate button -->
         <button id="ideogram_generate_btn" class="ideogram-generate-btn basic-button">
             &#9654; Generate
@@ -214,7 +208,8 @@
         <div id="ideogram_canvas_area" class="ideogram-canvas-area">
             <div class="ideogram-canvas-toolbar">
                 <span class="ideogram-hint-text">Drag to draw a bounding box. Click a box to select/edit. Right-click to delete.</span>
-                <button id="ideogram_clear_boxes_btn" class="basic-button" style="margin-left:auto">Clear All Boxes</button>
+                <button id="ideogram_clear_preview_btn" class="basic-button" style="margin-left:auto;display:none" title="Remove the generated image from the canvas background">Clear Preview</button>
+                <button id="ideogram_clear_boxes_btn" class="basic-button" style="margin-left:4px">Clear All Boxes</button>
             </div>
             <div id="ideogram_canvas_wrapper" class="ideogram-canvas-wrapper">
                 <canvas id="ideogram_canvas" class="ideogram-canvas"></canvas>

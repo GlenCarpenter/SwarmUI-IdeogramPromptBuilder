@@ -13,6 +13,7 @@ public class IdeogramPromptBuilderExtension : Extension
     public override void OnPreInit()
     {
         Logs.Info("IdeogramPromptBuilder extension loaded.");
+        ScriptFiles.Add("Assets/iro.min.js");
         ScriptFiles.Add("Assets/ideogram_builder.js");
         StyleSheetFiles.Add("Assets/ideogram_builder.css");
     }

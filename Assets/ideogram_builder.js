@@ -72,24 +72,11 @@ class IdeogramPalette {
     }
 
     _editSwatch(idx) {
-        let input = document.createElement('input');
-        input.type = 'color';
-        input.value = this.colors[idx] || '#888888';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-        input.click();
-        input.addEventListener('input', () => {
-            this.colors[idx] = input.value.toUpperCase();
+        IdeogramPalette._openPicker(this.colors[idx] || '#888888', (hex) => {
+            this.colors[idx] = hex;
             this._render();
             this.onChange();
         });
-        input.addEventListener('change', () => {
-            this.colors[idx] = input.value.toUpperCase();
-            this._render();
-            this.onChange();
-            input.remove();
-        });
-        input.addEventListener('blur', () => input.remove());
     }
 
     /** Called by the '+' button. */
@@ -97,7 +84,7 @@ class IdeogramPalette {
         if (this.colors.length >= this.max) {
             return;
         }
-        // Try to read a hex from clipboard
+        // Try to read a hex from clipboard first
         navigator.clipboard.readText().then(text => {
             let hex = text.trim().toUpperCase();
             if (/^#[0-9A-F]{6}$/.test(hex)) {
@@ -112,19 +99,120 @@ class IdeogramPalette {
     }
 
     _pickNew() {
-        let input = document.createElement('input');
-        input.type = 'color';
-        input.value = '#888888';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-        input.click();
-        input.addEventListener('change', () => {
-            this.colors.push(input.value.toUpperCase());
+        IdeogramPalette._openPicker('#888888', (hex) => {
+            this.colors.push(hex);
             this._render();
             this.onChange();
-            input.remove();
         });
-        input.addEventListener('blur', () => input.remove());
+    }
+
+    /**
+     * Opens a shared iro.js color picker popup anchored near the mouse.
+     * @param {string}   initialHex  Starting color, e.g. '#FF0000'
+     * @param {Function} onConfirm   Called with the final hex string when confirmed
+     */
+    static _openPicker(initialHex, onConfirm) {
+        // Remove any existing picker popup
+        IdeogramPalette._closePicker();
+
+        let overlay = document.createElement('div');
+        overlay.id = 'ideogram-color-picker-overlay';
+        overlay.className = 'ideogram-picker-overlay';
+
+        let popup = document.createElement('div');
+        popup.className = 'ideogram-picker-popup';
+
+        let wheelEl = document.createElement('div');
+        wheelEl.className = 'ideogram-picker-wheel';
+        popup.appendChild(wheelEl);
+
+        // Hex input
+        let hexRow = document.createElement('div');
+        hexRow.className = 'ideogram-picker-hex-row';
+        let hexLabel = document.createElement('span');
+        hexLabel.textContent = '#';
+        hexLabel.className = 'ideogram-picker-hex-hash';
+        let hexInput = document.createElement('input');
+        hexInput.type = 'text';
+        hexInput.className = 'ideogram-picker-hex-input';
+        hexInput.maxLength = 6;
+        hexInput.value = initialHex.replace('#', '');
+        hexRow.appendChild(hexLabel);
+        hexRow.appendChild(hexInput);
+        popup.appendChild(hexRow);
+
+        // Confirm / Cancel
+        let btnRow = document.createElement('div');
+        btnRow.className = 'ideogram-picker-btn-row';
+        let confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'OK';
+        confirmBtn.className = 'basic-button ideogram-picker-ok';
+        let cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'basic-button ideogram-picker-cancel';
+        btnRow.appendChild(confirmBtn);
+        btnRow.appendChild(cancelBtn);
+        popup.appendChild(btnRow);
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Init iro picker
+        let picker = new iro.ColorPicker(wheelEl, {
+            width: 180,
+            color: initialHex,
+            layout: [
+                { component: iro.ui.Wheel },
+                { component: iro.ui.Slider, options: { sliderType: 'value' } }
+            ]
+        });
+
+        // Keep hex input in sync
+        picker.on('color:change', color => {
+            hexInput.value = color.hexString.replace('#', '').toUpperCase();
+        });
+
+        // Allow typing a hex value
+        hexInput.addEventListener('input', () => {
+            let val = hexInput.value.trim();
+            if (/^[0-9A-Fa-f]{6}$/.test(val)) {
+                picker.color.hexString = '#' + val;
+            }
+        });
+
+        let doConfirm = () => {
+            let hex = ('#' + hexInput.value.trim().toUpperCase()).replace('##', '#');
+            if (!/^#[0-9A-F]{6}$/.test(hex)) {
+                hex = picker.color.hexString.toUpperCase();
+            }
+            IdeogramPalette._closePicker();
+            onConfirm(hex);
+        };
+
+        confirmBtn.addEventListener('click', doConfirm);
+        cancelBtn.addEventListener('click', () => IdeogramPalette._closePicker());
+        // Click outside popup to cancel
+        overlay.addEventListener('click', e => {
+            if (e.target == overlay) {
+                IdeogramPalette._closePicker();
+            }
+        });
+        // Enter to confirm, Escape to cancel
+        overlay.addEventListener('keydown', e => {
+            if (e.key == 'Enter') {
+                doConfirm();
+            }
+            else if (e.key == 'Escape') {
+                IdeogramPalette._closePicker();
+            }
+        });
+    }
+
+    static _closePicker() {
+        let existing = document.getElementById('ideogram-color-picker-overlay');
+        if (existing) {
+            existing.remove();
+        }
     }
 }
 
@@ -147,6 +235,7 @@ class IdeogramCanvas {
         this.selectedIdx = -1;
         this.dragState = null;    // { mode:'draw'|'move'|'resize', startX,startY, ... }
         this._handleBoxColors = [];
+        this.backgroundImg = null;
 
         canvas.addEventListener('pointerdown', e => this._onMouseDown(e));
         canvas.addEventListener('pointermove', e => this._onMouseMove(e));
@@ -359,24 +448,57 @@ class IdeogramCanvas {
         }
     }
 
+    /** Load an image URL as the canvas background. Calls _draw() when loaded. */
+    setBackground(src) {
+        let img = new Image();
+        img.onload = () => {
+            this.backgroundImg = img;
+            this._draw();
+        };
+        img.src = src;
+    }
+
+    /** Remove the background image. */
+    clearBackground() {
+        this.backgroundImg = null;
+        this._draw();
+    }
+
     /** Full repaint. */
     _draw() {
         let ctx = this.ctx;
         let cw = this.canvas.width, ch = this.canvas.height;
         ctx.clearRect(0, 0, cw, ch);
 
-        // Background grid
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, cw, ch);
-        ctx.strokeStyle = '#2a2a2a';
-        ctx.lineWidth = 1;
-        let step = cw / 10;
-        for (let gx = step; gx < cw; gx += step) {
-            ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, ch); ctx.stroke();
+        if (this.backgroundImg) {
+            // Draw generated image scaled to fill canvas
+            ctx.drawImage(this.backgroundImg, 0, 0, cw, ch);
+            // Semi-transparent grid overlay so boxes are still visible
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = 0.5;
+            let step = cw / 10;
+            for (let gx = step; gx < cw; gx += step) {
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, ch); ctx.stroke();
+            }
+            step = ch / 10;
+            for (let gy = step; gy < ch; gy += step) {
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(cw, gy); ctx.stroke();
+            }
         }
-        step = ch / 10;
-        for (let gy = step; gy < ch; gy += step) {
-            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(cw, gy); ctx.stroke();
+        else {
+            // Dark background grid
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.strokeStyle = '#2a2a2a';
+            ctx.lineWidth = 1;
+            let step = cw / 10;
+            for (let gx = step; gx < cw; gx += step) {
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, ch); ctx.stroke();
+            }
+            step = ch / 10;
+            for (let gy = step; gy < ch; gy += step) {
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(cw, gy); ctx.stroke();
+            }
         }
 
         // Draw boxes
@@ -502,7 +624,9 @@ class IdeogramBuilder {
         this._bindElements();
         this._initCanvas();
         this._initPalettes();
+        this._initTooltips();
         this._bindEvents();
+        this._hookImageResult();
         this._loadModels();
         this._updateStyleRows();
         this._renderElementList();
@@ -515,7 +639,6 @@ class IdeogramBuilder {
         this.widthInput     = document.getElementById('ideogram_width');
         this.heightInput    = document.getElementById('ideogram_height');
         this.modelSelect    = document.getElementById('ideogram_model_select');
-        this.redirectToggle = document.getElementById('ideogram_redirect_toggle');
         this.generateBtn    = document.getElementById('ideogram_generate_btn');
         this.statusSpan     = document.getElementById('ideogram_status');
         this.hldTextarea    = document.getElementById('ideogram_hld');
@@ -542,6 +665,7 @@ class IdeogramBuilder {
         this.copyJsonBtn    = document.getElementById('ideogram_copy_json_btn');
         this.importJsonBtn  = document.getElementById('ideogram_import_json_btn');
         this.clearBoxesBtn  = document.getElementById('ideogram_clear_boxes_btn');
+        this.clearPreviewBtn= document.getElementById('ideogram_clear_preview_btn');
         this.resizeHandle   = document.getElementById('ideogram_resize_handle');
         this.sidebar        = document.getElementById('ideogram_sidebar');
         this.canvasWrapper  = document.getElementById('ideogram_canvas_wrapper');
@@ -566,6 +690,72 @@ class IdeogramBuilder {
                 setTimeout(() => this.canvas.resize(this.canvasWrapper), 100);
             });
         }
+    }
+
+    _initTooltips() {
+        // Create a single shared tooltip element
+        let tip = document.getElementById('ideogram-tooltip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'ideogram-tooltip';
+            tip.className = 'ideogram-tooltip';
+            document.body.appendChild(tip);
+        }
+
+        let container = document.getElementById('ideogram_builder_container');
+        container.querySelectorAll('.ideogram-hint[title]').forEach(el => {
+            // Move title to data-tooltip so the native tooltip doesn't double-show
+            el.dataset.tooltip = el.getAttribute('title');
+            el.removeAttribute('title');
+        });
+
+        let showTip = (el) => {
+            let text = el.dataset.tooltip;
+            if (!text) {
+                return;
+            }
+            tip.textContent = text;
+            tip.classList.add('ideogram-tooltip-visible');
+            let rect = el.getBoundingClientRect();
+            let tw = tip.offsetWidth;
+            let left = rect.left + rect.width / 2 - tw / 2;
+            // Clamp to viewport
+            left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+            tip.style.left = left + 'px';
+            tip.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+        };
+
+        let hideTip = () => {
+            tip.classList.remove('ideogram-tooltip-visible');
+        };
+
+        container.addEventListener('mouseover', e => {
+            let hint = e.target.closest('.ideogram-hint');
+            if (hint) {
+                showTip(hint);
+            }
+        });
+        container.addEventListener('mouseout', e => {
+            if (e.target.closest('.ideogram-hint')) {
+                hideTip();
+            }
+        });
+        container.addEventListener('click', e => {
+            let hint = e.target.closest('.ideogram-hint');
+            if (hint) {
+                // Toggle: if already showing this hint's tip, hide it
+                if (tip.classList.contains('ideogram-tooltip-visible') && tip.textContent == hint.dataset.tooltip) {
+                    hideTip();
+                }
+                else {
+                    showTip(hint);
+                }
+                e.stopPropagation();
+            }
+            else {
+                hideTip();
+            }
+        });
     }
 
     _initPalettes() {
@@ -656,6 +846,12 @@ class IdeogramBuilder {
             }
         });
 
+        // Clear preview
+        this.clearPreviewBtn.addEventListener('click', () => {
+            this.canvas.clearBackground();
+            this.clearPreviewBtn.style.display = 'none';
+        });
+
         // Sidebar resize handle
         this._bindSidebarResize();
     }
@@ -684,6 +880,32 @@ class IdeogramBuilder {
             document.body.style.cursor = '';
             this._resizeCanvasToAspect();
         });
+    }
+
+    // ── Image result hook ─────────────────────────────────────────────────────
+
+    _hookImageResult() {
+        // Wrap the global gotImageResult so we can load the result onto the canvas
+        // when a generation was triggered by this builder.
+        if (typeof window.gotImageResult !== 'function') {
+            // Not ready yet – retry after a short delay
+            setTimeout(() => this._hookImageResult(), 500);
+            return;
+        }
+        if (window._ideogramOrigGotImageResult) {
+            return; // already hooked
+        }
+        window._ideogramOrigGotImageResult = window.gotImageResult;
+        window.gotImageResult = (image, metadata, batchId) => {
+            let result = window._ideogramOrigGotImageResult(image, metadata, batchId);
+            if (ideogramBuilder._awaitingResult) {
+                ideogramBuilder._awaitingResult = false;
+                ideogramBuilder.canvas.setBackground(image);
+                ideogramBuilder.clearPreviewBtn.style.display = '';
+                ideogramBuilder._setStatus('Preview loaded.', 3000);
+            }
+            return result;
+        };
     }
 
     // ── Model loading ─────────────────────────────────────────────────────────
@@ -1122,7 +1344,6 @@ class IdeogramBuilder {
         let caption = this._buildCaption();
         let promptStr = this._dumpJson(caption);
         let {w, h} = this._getWidthHeight();
-        let redirect = this.redirectToggle.checked;
 
         // Build input overrides – these override whatever is set in the Generate tab
         let overrides = {
@@ -1145,20 +1366,16 @@ class IdeogramBuilder {
         }
 
         this._setStatus('Queuing generation…');
+        this._awaitingResult = true;
 
         // Give SwarmUI a tick to process the model change, then generate
         setTimeout(() => {
             if (typeof mainGenHandler !== 'undefined') {
                 mainGenHandler.doGenerate(overrides);
-                this._setStatus('Generation queued.', 2000);
-                if (redirect) {
-                    let generateTab = document.getElementById('maintab_generate');
-                    if (generateTab) {
-                        generateTab.click();
-                    }
-                }
+                this._setStatus('Generation queued…');
             }
             else {
+                this._awaitingResult = false;
                 this._setStatus('Error: SwarmUI generate handler not ready.', 3000);
             }
         }, 100);
