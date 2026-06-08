@@ -2,6 +2,8 @@
 
 A SwarmUI extension that provides a dedicated visual editor for constructing **Ideogram 4 structured JSON captions** — the prompt format used by Ideogram 4 models that describes an image as a hierarchy of typed elements with optional bounding boxes, color palettes, and style descriptors.
 
+<img width="1702" height="1263" alt="image" src="https://github.com/user-attachments/assets/4151878e-b48c-437d-8052-2c77c467cf7f" />
+
 ## Features
 
 - **Visual bounding-box canvas** — draw, move, and resize element regions directly on a proportional canvas that matches your chosen output dimensions
