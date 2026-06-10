@@ -86,7 +86,7 @@ Clone this repository into SwarmUI's `src/Extensions/` folder and restart SwarmU
 
 ```
 cd SwarmUI/src/Extensions
-git clone https://github.com/your-username/SwarmUI-IdeogramPromptBuilder
+git clone https://github.com/GlenCarpenter/SwarmUI-IdeogramPromptBuilder
 ```
 
 SwarmUI will detect, build, and load the extension automatically on next launch.
